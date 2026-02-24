@@ -1,6 +1,7 @@
 # Editors
 .vscode/
 .idea/
+*.DotSettings.user
 
 # Dotnet
 bin/

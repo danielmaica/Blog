@@ -16,9 +16,9 @@ namespace Blog.Controllers;
 [Route("v1/account")]
 public class AccountController : ControllerBase
 {
-  private readonly BlogDataContext _context = new();
-  private readonly TokenService _tokenService = new();
-  private readonly EmailService _emailService = new();
+  private readonly BlogDataContext _context;
+  private readonly TokenService _tokenService;
+  private readonly EmailService _emailService;
 
   public AccountController(BlogDataContext context, TokenService tokenService, EmailService emailService)
   {

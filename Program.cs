@@ -9,36 +9,43 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
-LoadConfiguration(builder);
 ConfiguraAuthentication(builder);
 ConfigureMvc(builder);
 ConfigureServices(builder);
 
 var app = builder.Build();
+LoadConfiguration(app);
 
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseResponseCompression();
 app.UseStaticFiles();
 app.MapControllers();
+
+if (app.Environment.IsDevelopment())
+{
+  Console.WriteLine("Estou no ambiente de desenvolvimento!");
+}
+
 app.Run();
 
 
-void LoadConfiguration(WebApplicationBuilder builder)
+void LoadConfiguration(WebApplication wa)
 {
-  Configuration.JwtKey = builder.Configuration.GetValue<string>("JwtKey")!;
-  Configuration.ApiKeyName = builder.Configuration.GetValue<string>("ApiKeyName")!;
-  Configuration.ApiKey = builder.Configuration.GetValue<string>("ApiKey")!;
+  Configuration.JwtKey = wa.Configuration.GetValue<string>("JwtKey")!;
+  Configuration.ApiKeyName = wa.Configuration.GetValue<string>("ApiKeyName")!;
+  Configuration.ApiKey = wa.Configuration.GetValue<string>("ApiKey")!;
 
   var smtp = new Configuration.SmtpConfiguration();
-  builder.Configuration.GetSection("Smtp").Bind(smtp);
+  wa.Configuration.GetSection("Smtp").Bind(smtp);
   Configuration.Smtp = smtp;
 }
 
-void ConfiguraAuthentication(WebApplicationBuilder builder)
+void ConfiguraAuthentication(WebApplicationBuilder wab)
 {
   var key = Encoding.ASCII.GetBytes(Configuration.JwtKey);
-  builder.Services.AddAuthentication(x =>
+  wab.Services.AddAuthentication(x =>
   {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -54,18 +61,18 @@ void ConfiguraAuthentication(WebApplicationBuilder builder)
   });
 }
 
-void ConfigureMvc(WebApplicationBuilder builder)
+void ConfigureMvc(WebApplicationBuilder wab)
 {
-  builder.Services.AddMemoryCache();
-  builder.Services.AddResponseCompression(options =>
+  wab.Services.AddMemoryCache();
+  wab.Services.AddResponseCompression(options =>
   {
     options.Providers.Add<GzipCompressionProvider>();
   });
-  builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+  wab.Services.Configure<GzipCompressionProviderOptions>(options =>
   {
     options.Level = CompressionLevel.Optimal;
   });
-  builder.Services
+  wab.Services
   .AddControllers()
   .ConfigureApiBehaviorOptions(options => options.SuppressModelStateInvalidFilter = true)
   .AddJsonOptions(x =>
@@ -75,9 +82,9 @@ void ConfigureMvc(WebApplicationBuilder builder)
   });
 }
 
-void ConfigureServices(WebApplicationBuilder builder)
+void ConfigureServices(WebApplicationBuilder wab)
 {
-  builder.Services.AddDbContext<BlogDataContext>();
-  builder.Services.AddTransient<TokenService>();
-  builder.Services.AddTransient<EmailService>();
+  wab.Services.AddDbContext<BlogDataContext>();
+  wab.Services.AddTransient<TokenService>();
+  wab.Services.AddTransient<EmailService>();
 }
